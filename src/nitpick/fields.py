@@ -2,13 +2,13 @@
 import json
 
 from marshmallow import ValidationError, fields
-from marshmallow.fields import Dict, Field, List, Nested, String
+from marshmallow.fields import Boolean, Dict, Field, List, Nested, String
 from marshmallow.validate import Length
 from more_itertools import always_iterable
 
 from nitpick.generic import pretty_exception
 
-__all__ = ("Dict", "List", "String", "Nested", "Field")
+__all__ = ("Boolean", "Dict", "Field", "List", "Nested", "String")
 
 
 def is_valid_json(json_string: str) -> bool:

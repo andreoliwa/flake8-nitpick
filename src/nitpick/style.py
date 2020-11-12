@@ -36,7 +36,7 @@ LOGGER = logging.getLogger(__name__)
 class Style:
     """Include styles recursively from one another."""
 
-    def __init__(self) -> None:
+    def __init__(self, relative_urls=True) -> None:
         self._all_styles = MergeDict()
         self._already_included = set()  # type: Set[str]
         self._first_full_path = ""  # type: str
@@ -44,6 +44,7 @@ class Style:
         self._dynamic_schema_class = BaseStyleSchema  # type: type
         self.rebuild_dynamic_schema()
         self.style_errors = {}  # type: Dict[str, Any]
+        self.relative_urls = relative_urls
 
     @staticmethod
     def get_default_style_url():
@@ -175,17 +176,10 @@ class Style:
             # No style will be fetched in offline mode
             return None
 
-        if self._first_full_path and not is_url(url):
-            prefix, rest = self._first_full_path.split(":/")
-            domain_plus_url = str(rest).strip("/").rstrip("/") + "/" + url
-            new_url = "{}://{}".format(prefix, domain_plus_url)
-        else:
-            new_url = url
-
-        parsed_url = list(urlparse(new_url))
-        if not parsed_url[2].endswith(TOML_EXTENSION):
-            parsed_url[2] += TOML_EXTENSION
-        new_url = urlunparse(parsed_url)
+        new_url = self._build_new_url(url)
+        if new_url is None:
+            self._first_full_path = str(Path.cwd())
+            return self.fetch_style_from_local_path(url)
 
         if new_url in self._already_included:
             return None
@@ -220,6 +214,21 @@ class Style:
         self._already_included.add(new_url)
 
         return style_path
+
+    def _build_new_url(self, url: str) -> Optional[str]:
+        if self._first_full_path and not is_url(url):
+            if not self.relative_urls:
+                return None
+            prefix, rest = self._first_full_path.split(":/")
+            domain_plus_url = str(rest).strip("/").rstrip("/") + "/" + url
+            new_url = "{}://{}".format(prefix, domain_plus_url)
+        else:
+            new_url = url
+
+        parsed_url = list(urlparse(new_url))
+        if not parsed_url[2].endswith(TOML_EXTENSION):
+            parsed_url[2] += TOML_EXTENSION
+        return urlunparse(parsed_url)
 
     def fetch_style_from_local_path(self, partial_file_name: str) -> Optional[Path]:
         """Fetch a style file from a local path."""

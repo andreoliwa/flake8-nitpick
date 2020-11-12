@@ -45,6 +45,7 @@ class ToolNitpickSectionSchema(BaseNitpickSchema):
     error_messages = {"unknown": help_message("Unknown configuration", "tool_nitpick_section.html")}
 
     style = PolyField(deserialization_schema_selector=fields.string_or_list_field)
+    relative_urls = fields.Boolean()  # FIXME: add docs
 
 
 class NitpickStylesSectionSchema(BaseNitpickSchema):

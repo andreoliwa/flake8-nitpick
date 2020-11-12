@@ -407,6 +407,38 @@ def test_relative_style_on_urls(request):
 
 
 @responses.activate
+def test_full_urls_only(request):
+    """Read styles from full URLs only; don't build relative URLs from partial file names."""
+    remote_url = "https://example.com/remote-style.toml"
+    remote_style = """
+        ["pyproject.toml".tool.black]
+        line-length = 100
+    """
+    responses.add(responses.GET, remote_url, dedent(remote_style), status=200)
+
+    local_file = "local-file.toml"
+    local_style = """
+        ["pyproject.toml".tool.black]
+        line-length = 120
+    """
+
+    ProjectMock(request).pyproject_toml(
+        """
+        [tool.nitpick]
+        style = ["{}","./{}"]
+        relative_urls = false
+
+        [tool.black]
+        line-length = 80
+        """.format(
+            remote_url, local_file
+        )
+    ).named_style(local_file, local_style).flake8().assert_single_error(
+        "NIP319 File pyproject.toml has different values. Use this:\x1b[32m\n[tool.black]\nline-length = 120\x1b[0m"
+    )
+
+
+@responses.activate
 def test_fetch_private_github_urls(request):
     """Fetch private GitHub URLs with a token on the query string."""
     base_url = "https://raw.githubusercontent.com/user/private_repo/branch/path/to/nitpick-style"

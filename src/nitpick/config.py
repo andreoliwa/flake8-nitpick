@@ -65,7 +65,8 @@ class Config(NitpickMixin):  # pylint: disable=too-many-instance-attributes
             return
 
         configured_styles = self.tool_nitpick_dict.get("style", "")  # type: StrOrList
-        style = Style()
+        relative_urls = self.tool_nitpick_dict.get("relative_urls", True)  # type: bool
+        style = Style(relative_urls)
         style.find_initial_styles(configured_styles)
 
         self.style_dict = style.merge_toml_dict()
